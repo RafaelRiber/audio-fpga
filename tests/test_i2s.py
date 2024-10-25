@@ -1,13 +1,25 @@
 from amaranth.sim import Simulator
 from audio_fpga import I2S_clocks
 
+
+
 def test_i2s_clocks():
-    i2s_clocks = I2S_clocks(mclk_sclk_ratio=2, sclk_ws_ratio=5)
+    m_s_ratio = 4 
+    s_w_ratio = 264
+
+    i2s_clocks = I2S_clocks(mclk_sclk_ratio=m_s_ratio, sclk_ws_ratio=s_w_ratio)
 
     async def testbench(ctx):
-        # await ctx.tick(domain='mclk')
+        # Wait a few cycles
+        await ctx.tick(domain='mclk').repeat(3)
         ctx.set(i2s_clocks.en, True)
-        await ctx.tick(domain='mclk').repeat(500)
+        for _ in range(100):
+            # await ctx.tick(domain='mclk').repeat(m_s_ratio-1)
+            # assert ctx.get(i2s_clocks.sclk) == 0
+            await ctx.tick(domain='mclk').repeat(m_s_ratio)
+            assert ctx.get(i2s_clocks.sclk) == 1
+            await ctx.tick(domain='mclk').repeat(m_s_ratio)
+            assert ctx.get(i2s_clocks.sclk) == 0
 
 
 

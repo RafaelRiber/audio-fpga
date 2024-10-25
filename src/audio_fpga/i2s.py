@@ -28,7 +28,7 @@ class I2S_clocks(wiring.Component):
         
         # TODO: Fix the overflows so that everything is aligned
         m.d.comb += self.mclk.eq(cd_mclk.clk)
-        m.d.comb += sclk_ovf.eq(sclk_count == 2*sclk_count.shape().width-1) 
+        m.d.comb += sclk_ovf.eq(sclk_count == 2**(sclk_count.shape().width-1)-1) 
         m.d.comb += ws_ovf.eq(ws_count == (2*self.mclk_sclk_ratio * self.sclk_ws_ratio) + self.mclk_sclk_ratio)
 
 
