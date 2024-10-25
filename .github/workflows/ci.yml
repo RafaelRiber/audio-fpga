@@ -1,0 +1,21 @@
+on: [push, pull_request, merge_group]
+
+name: CI
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out source code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: astral-sh/setup-uv
+      uses: astral-sh/setup-uv@v3.1.7
+      with:
+        version: "latest"
+    - name : Install pytest
+      run: uv tool install pytest
+        
+    - name: Run tests
+      run: uv run -m pytest

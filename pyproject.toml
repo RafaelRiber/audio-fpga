@@ -1,0 +1,34 @@
+[project]
+name = "uv-amaranth-template"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "amaranth-boards",
+    "amaranth[builtin-yosys]~=0.5",
+    "python-dotenv>=1.0.1",
+    "yowasp-nextpnr-ecp5>=0.7.0.0.post519",
+    "yowasp-nextpnr-gowin>=0.7.0.0.post519",
+    "yowasp-nextpnr-ice40>=0.7.0.0.post519",
+    "yowasp-yosys>=0.46.0.0.post790",
+    "pytest", 
+    "python-dotenv"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+amaranth-boards = { git = "https://github.com/amaranth-lang/amaranth-boards" }
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src",
+]
+
+[project.scripts]
+# test = "pytest"
+build_icebreaker = "uv_amaranth_template:build_icebreaker"
+
