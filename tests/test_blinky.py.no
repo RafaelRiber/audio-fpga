@@ -1,6 +1,6 @@
 from amaranth.sim import Simulator
 
-from uv_amaranth_template.blinky import Blinky
+from audio_fpga.blinky import Blinky
 
 
 def test_blinky_frequency():

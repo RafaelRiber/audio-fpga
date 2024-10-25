@@ -1,8 +1,6 @@
 [project]
-name = "uv-amaranth-template"
+name = "audio-fpga"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "amaranth-boards",
@@ -30,5 +28,5 @@ pythonpath = [
 
 [project.scripts]
 # test = "pytest"
-build_icebreaker = "uv_amaranth_template:build_icebreaker"
+build_icebreaker = "audio_fpga:build_icebreaker"
 

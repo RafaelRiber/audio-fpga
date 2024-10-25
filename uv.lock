@@ -52,6 +52,34 @@ wheels = [
 ]
 
 [[package]]
+name = "audio-fpga"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "amaranth", extra = ["builtin-yosys"] },
+    { name = "amaranth-boards" },
+    { name = "pytest" },
+    { name = "python-dotenv" },
+    { name = "yowasp-nextpnr-ecp5" },
+    { name = "yowasp-nextpnr-gowin" },
+    { name = "yowasp-nextpnr-ice40" },
+    { name = "yowasp-yosys" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "amaranth", extras = ["builtin-yosys"], specifier = "~=0.5" },
+    { name = "amaranth-boards", git = "https://github.com/amaranth-lang/amaranth-boards" },
+    { name = "pytest" },
+    { name = "python-dotenv" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "yowasp-nextpnr-ecp5", specifier = ">=0.7.0.0.post519" },
+    { name = "yowasp-nextpnr-gowin", specifier = ">=0.7.0.0.post519" },
+    { name = "yowasp-nextpnr-ice40", specifier = ">=0.7.0.0.post519" },
+    { name = "yowasp-yosys", specifier = ">=0.46.0.0.post790" },
+]
+
+[[package]]
 name = "click"
 version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
@@ -268,34 +296,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/35/b9/de2a5c0144d7d75a57ff355c0c24054f965b2dc3036456ae03a51ea6264b/tomli-2.0.2.tar.gz", hash = "sha256:d46d457a85337051c36524bc5349dd91b1877838e2979ac5ced3e710ed8a60ed", size = 16096 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cf/db/ce8eda256fa131af12e0a76d481711abe4681b6923c27efb9a255c9e4594/tomli-2.0.2-py3-none-any.whl", hash = "sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38", size = 13237 },
-]
-
-[[package]]
-name = "uv-amaranth-template"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "amaranth", extra = ["builtin-yosys"] },
-    { name = "amaranth-boards" },
-    { name = "pytest" },
-    { name = "python-dotenv" },
-    { name = "yowasp-nextpnr-ecp5" },
-    { name = "yowasp-nextpnr-gowin" },
-    { name = "yowasp-nextpnr-ice40" },
-    { name = "yowasp-yosys" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "amaranth", extras = ["builtin-yosys"], specifier = "~=0.5" },
-    { name = "amaranth-boards", git = "https://github.com/amaranth-lang/amaranth-boards" },
-    { name = "pytest" },
-    { name = "python-dotenv" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "yowasp-nextpnr-ecp5", specifier = ">=0.7.0.0.post519" },
-    { name = "yowasp-nextpnr-gowin", specifier = ">=0.7.0.0.post519" },
-    { name = "yowasp-nextpnr-ice40", specifier = ">=0.7.0.0.post519" },
-    { name = "yowasp-yosys", specifier = ">=0.46.0.0.post790" },
 ]
 
 [[package]]

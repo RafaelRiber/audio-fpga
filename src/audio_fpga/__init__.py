@@ -6,7 +6,7 @@ from amaranth_boards.tang_nano import TangNanoPlatform
 from amaranth_boards.arty_a7 import ArtyA7_100Platform
 
 from .blinky import Blinky
-
+from .i2s import I2S_clocks
 # Temporary fix until uv supports env files
 from dotenv import load_dotenv
 
