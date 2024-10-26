@@ -24,12 +24,13 @@ class Toplevel(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
+        # Clock
         i2s2_pins = platform.request("pmod_i2s2")
         m.submodules.clk12 = clk12 = io.Buffer("i", platform.request("clk12", dir="-"))
-
         m.domains.i2s_mclk = cd_i2s_mclk = ClockDomain()
         m.d.comb += cd_i2s_mclk.clk.eq(clk12.i)
 
+        # I2S instantiation and connection
         m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
         m.d.comb += [
             i2s2_pins.da_MCLK.o.eq(cd_i2s_mclk.clk),
