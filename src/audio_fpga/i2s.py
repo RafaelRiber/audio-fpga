@@ -26,11 +26,11 @@ class I2S_clocks(wiring.Component):
         sclk_count = Signal(range(self.mclk_sclk_ratio + 1))
         sclk_ovf = Signal()
 
-        ws_count = Signal(range(2*self.sclk_ws_ratio*self.mclk_sclk_ratio))
+        ws_count = Signal(range(self.sclk_ws_ratio*self.mclk_sclk_ratio + 1))
         ws_ovf = Signal(init=0)
         
-        m.d.comb += sclk_ovf.eq(sclk_count == 2**(sclk_count.shape().width-1)-1)
-        m.d.comb += ws_ovf.eq(ws_count == (2**(ws_count.shape().width)-1))
+        m.d.comb += sclk_ovf.eq(sclk_count == (2**(sclk_count.shape().width-1)-1)//2)
+        m.d.comb += ws_ovf.eq(ws_count == (2**(ws_count.shape().width)-1)//4)
 
         m.d.i2s_mclk += sclk_count.eq(sclk_count + 1)
         m.d.i2s_mclk += ws_count.eq(ws_count + 1)
