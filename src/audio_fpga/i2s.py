@@ -1,10 +1,10 @@
 from amaranth import *
-from amaranth.lib import wiring
+from amaranth.lib import wiring, stream
 from amaranth.lib.cdc import FFSynchronizer
 from amaranth.lib.wiring import In, Out
 
 class I2S_clocks(wiring.Component):
-    # en : In(1)
+    en : In(1)
     # clk : In(1)
     mclk : Out(1)
     sclk : Out(1)
@@ -34,18 +34,51 @@ class I2S_clocks(wiring.Component):
 
         m.d.i2s_mclk += sclk_count.eq(sclk_count + 1)
         m.d.i2s_mclk += ws_count.eq(ws_count + 1)
-        with m.If(sclk_ovf):
-            m.d.i2s_mclk += sclk_count.eq(0)
-            m.d.i2s_mclk += self.sclk.eq(~self.sclk)
+        
+        with m.If(self.en):
+            m.d.i2s_mclk += self.mclk.eq(~self.mclk)
+            with m.If(sclk_ovf):
+                m.d.i2s_mclk += sclk_count.eq(0)
+                m.d.i2s_mclk += self.sclk.eq(~self.sclk)
 
-        with m.If(ws_ovf):
-            m.d.i2s_mclk += ws_count.eq(0)
-            m.d.i2s_mclk += self.ws.eq(~self.ws)
+            with m.If(ws_ovf):
+                m.d.i2s_mclk += ws_count.eq(0)
+                m.d.i2s_mclk += self.ws.eq(~self.ws)
+            return m
 
-                
+class I2S_TX(wiring.Component):
+    def __init__(self, width):
+        self.width = width
+        super().__init__({
+            # Inputs
+            "l_data_tx" : In(stream.Signature(signed(width))),
+            "r_data_tx" : In(stream.Signature(signed(width))),
+            "en" : In(1),
+
+            # Outputs
+            "mclk" : Out(1),
+            "sclk" : Out(1),
+            "ws" : Out(1),
+            "sd_tx" : Out(1)
+    })
+
+    def elaborate(self, platform):
+        m = Module()
+        
+        m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
+        m.d.comb += i2s_clocks.en.eq(self.en),
 
 
+        with m.If(self.en == 1):
+            m.d.comb += [
+                    self.mclk.eq(i2s_clocks.mclk),
+                    self.sclk.eq(i2s_clocks.sclk),
+                    self.ws.eq(i2s_clocks.ws)
+                    
+            ]
 
+        counter = Signal(signed(self.width))
+
+
+       
         return m
-
-

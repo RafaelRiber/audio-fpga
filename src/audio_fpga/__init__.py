@@ -4,7 +4,7 @@ from amaranth.lib import io
 from amaranth_boards.icebreaker import ICEBreakerPlatform
 
 #from .blinky import Blinky
-from .i2s import I2S_clocks
+from .i2s import I2S_clocks, I2S_TX
 # Temporary fix until uv supports env files
 from dotenv import load_dotenv
 
@@ -24,23 +24,52 @@ class Toplevel(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        # Clock
         i2s2_pins = platform.request("pmod_i2s2")
-        m.submodules.clk12 = clk12 = io.Buffer("i", platform.request("clk12", dir="-"))
+        
+        # Clock domain creation
         m.domains.i2s_mclk = cd_i2s_mclk = ClockDomain()
-        m.d.comb += cd_i2s_mclk.clk.eq(clk12.i)
+       
+        # PLL
+        cd_por = ClockDomain("por", local=True)
+        m.domains += cd_por
+        delay = int(5 * 3e-6 * 48e6)
+        timer = Signal(range(delay))
+        ready = Signal()
+        pll_locked = Signal()
+        with m.If(timer == delay):
+            m.d.por += ready.eq(1)
+        with m.Else():
+            m.d.por += timer.eq(timer + 1)
+        m.d.comb += cd_por.clk.eq(cd_i2s_mclk.clk), cd_por.rst.eq(~pll_locked)
+        m.d.comb += cd_i2s_mclk.rst.eq(~ready)
+        m.submodules.pll = Instance(
+            "SB_PLL40_PAD",
+            p_FEEDBACK_PATH="SIMPLE",
+            p_DIVR=0,
+            p_DIVF=65,
+            p_DIVQ=5,
+            p_FILTER_RANGE=1,
+            i_PACKAGEPIN=platform.request("clk12", dir="-").io,
+            i_RESETB=1,
+            o_PLLOUTGLOBAL=cd_i2s_mclk.clk,
+            o_LOCK=pll_locked,
+        )
 
         # I2S instantiation and connection
         m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
         m.d.comb += [
+            i2s_clocks.en.eq(True),
+
             i2s2_pins.da_MCLK.o.eq(cd_i2s_mclk.clk),
             i2s2_pins.da_LRCK.o.eq(i2s_clocks.ws),
             i2s2_pins.da_SCLK.o.eq(i2s_clocks.sclk),
 
             i2s2_pins.ad_MCLK.o.eq(cd_i2s_mclk.clk),
             i2s2_pins.ad_LRCK.o.eq(i2s_clocks.ws),
-            i2s2_pins.ad_SCLK.o.eq(i2s_clocks.sclk)
+            i2s2_pins.ad_SCLK.o.eq(i2s_clocks.sclk),
+            i2s2_pins.da_SDIN.o.eq(i2s2_pins.ad_SDOUT.i)
         ]
+
 
         return m
 
