@@ -48,9 +48,9 @@ class I2S_clocks(wiring.Component):
         return m
 
 class I2S_Transceiver(wiring.Component):
-    def __init__(self, width, pll=True):
+    def __init__(self, width, pll_ice40=True):
         self.width = width
-        self.pll = pll
+        self.pll = pll_ice40
         super().__init__({
             # Inputs
             "l_data_tx" : In(stream.Signature(signed(width))),

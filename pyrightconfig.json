@@ -5,6 +5,7 @@
   ],
   "venv" : ".venv",
   "venvPath": ".",
+  "stubPath" : "./amaranth-stubs",
   "typeCheckingMode" : "off",
   "reportMissingImports": true,
   "reportMissingTypeStubs": false,

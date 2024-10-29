@@ -5,6 +5,7 @@ from amaranth_boards.icebreaker import ICEBreakerPlatform
 
 #from .blinky import Blinky
 from .i2s import I2S_clocks, I2S_Transceiver
+from .sine import Sine
 # Temporary fix until uv supports env files
 from dotenv import load_dotenv
 
@@ -62,5 +63,5 @@ def run_dev():
     from amaranth.cli import main
     m=Module()
     # m.submodules.i2s_clocks = i2s_dev = I2S_clocks()
-    m.submodules.i2s_transceiver = i2s_tx = I2S_Transceiver(width = 24)
+    m.submodules.i2s_transceiver = i2s_tx = I2S_Transceiver(width = 24, pll_ice40=False)
     main(m)
