@@ -101,7 +101,6 @@ class I2S_Transceiver(wiring.Component):
 
 
         m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
-        # m.domains.i2s_mclk = cd_i2s_mclk = ClockDomain()
         m.d.comb += [
             i2s_clocks.en.eq(self.en),
         ] 
@@ -122,7 +121,7 @@ class I2S_Transceiver(wiring.Component):
                     self.mclk.eq(cd_i2s_mclk.clk)
             ]
 
-        counter_tx = Signal(signed(self.width + 2))
+        counter_tx = Signal(self.width)
         counter_rx = Signal(self.width)
 
         ##################### TX FSM #############################
@@ -133,13 +132,13 @@ class I2S_Transceiver(wiring.Component):
                     m.next = "TX_WAIT"
                 with m.If(~self.ws & ~latch_l_tx & self.l_data_tx.valid):
                     m.d.comb += self.l_data_tx.ready.eq(1)
-                    m.d.i2s_mclk += counter_tx.eq(self.width + 2)
+                    m.d.i2s_mclk += counter_tx.eq(self.width)
                     m.d.i2s_mclk += data_tx.eq(self.l_data_tx.payload)
                     with m.If(~sclk_edge_tx):
                         m.next = "TX_LEFT"
                 with m.If(self.ws & ~latch_r_tx & self.r_data_tx.valid): 
                     m.d.comb += self.r_data_tx.ready.eq(1)
-                    m.d.i2s_mclk += counter_tx.eq(self.width + 2)
+                    m.d.i2s_mclk += counter_tx.eq(self.width)
                     m.d.i2s_mclk += data_tx.eq(self.r_data_tx.payload)
                     with m.If(~sclk_edge_tx):
                         m.next = "TX_RIGHT"

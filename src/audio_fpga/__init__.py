@@ -1,6 +1,6 @@
 from amaranth import *
 from amaranth.build import *
-from amaranth.lib import io
+from amaranth.lib import wiring
 from amaranth_boards.icebreaker import ICEBreakerPlatform
 
 #from .blinky import Blinky
@@ -31,18 +31,25 @@ class Toplevel(Elaboratable):
 
         # I2S instantiation and connection
         # m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
-        m.submodules.i2s_transceiver = i2s_tx = I2S_Transceiver(width = 24)
+        m.submodules.i2s_transceiver = i2s = I2S_Transceiver(width = 24)
+
+        wiring.connect(m, i2s.l_data_rx, i2s.l_data_tx)
+        wiring.connect(m, i2s.r_data_rx, i2s.r_data_tx)
+
         m.d.comb += [
-            i2s_tx.en.eq(True),
+            i2s.en.eq(True),
 
-            i2s2_pins.da_MCLK.o.eq(i2s_tx.mclk),
-            i2s2_pins.da_LRCK.o.eq(i2s_tx.ws),
-            i2s2_pins.da_SCLK.o.eq(i2s_tx.sclk),
+            i2s2_pins.da_MCLK.o.eq(i2s.mclk),
+            i2s2_pins.da_LRCK.o.eq(i2s.ws),
+            i2s2_pins.da_SCLK.o.eq(i2s.sclk),
 
-            i2s2_pins.ad_MCLK.o.eq(i2s_tx.mclk),
-            i2s2_pins.ad_LRCK.o.eq(i2s_tx.ws),
-            i2s2_pins.ad_SCLK.o.eq(i2s_tx.sclk),
-            i2s2_pins.da_SDIN.o.eq(i2s2_pins.ad_SDOUT.i)
+            i2s2_pins.ad_MCLK.o.eq(i2s.mclk),
+            i2s2_pins.ad_LRCK.o.eq(i2s.ws),
+            i2s2_pins.ad_SCLK.o.eq(i2s.sclk),
+            # i2s2_pins.da_SDIN.o.eq(i2s2_pins.ad_SDOUT.i)
+
+            i2s2_pins.da_SDIN.o.eq(i2s.sd_tx),
+            i2s.sd_rx.eq(i2s2_pins.ad_SDOUT.i)
         ]
 
 
