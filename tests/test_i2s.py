@@ -57,7 +57,7 @@ def test_i2s_tx():
     async def testbench_output_left(ctx):
         ctx.set(i2s_tx.en, 1)
         await ctx.tick('i2s_mclk').repeat(2)
-        for index, expected_bit in enumerate([0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,]):
+        for index, expected_bit in enumerate([0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]):
             _, sdat = await ctx.posedge(i2s_tx.sclk).sample(i2s_tx.sd_tx)
             assert sdat == expected_bit, \
                 f"bit {index}: {sdat} != {expected_bit} (expected)"
@@ -77,3 +77,33 @@ def test_i2s_tx():
     with sim.write_vcd("test_i2s_tx.vcd"):
         sim.run()
 
+
+def test_i2s_rx():
+    width = 24
+
+    i2s = I2S_Transceiver(width = width, pll_ice40=False)
+
+    async def testbench(ctx):
+        ctx.set(i2s.en, 1)
+        for bit in [1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]:
+            await ctx.posedge(i2s.sclk)
+            ctx.set(i2s.sd_rx, bit)
+            await ctx.tick('i2s_mclk').repeat(2)
+        await ctx.posedge(i2s.ws)
+        for bit in [1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0]:
+            await ctx.posedge(i2s.sclk)
+            ctx.set(i2s.sd_rx, bit)
+            await ctx.tick('i2s_mclk').repeat(2)
+        await ctx.negedge(i2s.ws)
+        for bit in [1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0]:
+            await ctx.posedge(i2s.sclk)
+            ctx.set(i2s.sd_rx, bit)
+            await ctx.tick('i2s_mclk').repeat(2)
+
+        await ctx.tick('i2s_mclk').repeat(199)
+    
+    sim = Simulator(i2s)
+    sim.add_clock(88.5e-9, domain='i2s_mclk')
+    sim.add_testbench(testbench)
+    with sim.write_vcd("test_i2s_rx.vcd"):
+        sim.run()

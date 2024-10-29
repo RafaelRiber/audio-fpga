@@ -106,12 +106,13 @@ class I2S_Transceiver(wiring.Component):
             i2s_clocks.en.eq(self.en),
         ] 
 
-        data = Signal(self.width)
-        latch_l = Signal()
-        latch_r = Signal()
+        data_tx = Signal(self.width)
+        data_rx = Signal(self.width)
+        latch_l_tx = Signal()
+        latch_r_tx = Signal()
 
         sclk_reg = Signal()
-        sclk_edge = sclk_reg & self.sclk
+        sclk_edge_tx = sclk_reg & self.sclk
         m.d.i2s_mclk += sclk_reg.eq(self.sclk)
 
         with m.If(self.en == 1):
@@ -121,51 +122,126 @@ class I2S_Transceiver(wiring.Component):
                     self.mclk.eq(cd_i2s_mclk.clk)
             ]
 
-        counter = Signal(signed(self.width + 2))
+        counter_tx = Signal(signed(self.width + 2))
+        counter_rx = Signal(self.width)
 
         ##################### TX FSM #############################
 
-        with m.FSM(domain='i2s_mclk'):
-            with m.State("WAIT"):
+        with m.FSM(domain='i2s_mclk') as fsm_tx:
+            with m.State("TX_WAIT"):
                 with m.If(self.en == 1):
-                    m.next = "WAIT"
-                with m.If(~self.ws & ~latch_l & self.l_data_tx.valid):
+                    m.next = "TX_WAIT"
+                with m.If(~self.ws & ~latch_l_tx & self.l_data_tx.valid):
                     m.d.comb += self.l_data_tx.ready.eq(1)
-                    m.d.i2s_mclk += counter.eq(self.width + 2)
-                    m.d.i2s_mclk += data.eq(self.l_data_tx.payload)
-                    with m.If(~sclk_edge):
-                        m.next = "LEFT"
-                with m.If(self.ws & ~latch_r & self.r_data_tx.valid): 
+                    m.d.i2s_mclk += counter_tx.eq(self.width + 2)
+                    m.d.i2s_mclk += data_tx.eq(self.l_data_tx.payload)
+                    with m.If(~sclk_edge_tx):
+                        m.next = "TX_LEFT"
+                with m.If(self.ws & ~latch_r_tx & self.r_data_tx.valid): 
                     m.d.comb += self.r_data_tx.ready.eq(1)
-                    m.d.i2s_mclk += counter.eq(self.width + 2)
-                    m.d.i2s_mclk += data.eq(self.r_data_tx.payload)
-                    with m.If(~sclk_edge):
-                        m.next = "RIGHT"
+                    m.d.i2s_mclk += counter_tx.eq(self.width + 2)
+                    m.d.i2s_mclk += data_tx.eq(self.r_data_tx.payload)
+                    with m.If(~sclk_edge_tx):
+                        m.next = "TX_RIGHT"
 
 
-            with m.State("LEFT"):
+            with m.State("TX_LEFT"):
                 m.d.comb += self.l_data_tx.ready.eq(0)
-                with m.If(~self.ws & latch_r):
-                    m.d.i2s_mclk += latch_r.eq(0)
-                with m.If(sclk_edge):
-                    m.d.i2s_mclk += data.eq(Cat(0,data))
-                    m.d.i2s_mclk += self.sd_tx.eq(data[-1])
-                    m.d.i2s_mclk += counter.eq(counter - 1)
-                
-                with m.If(counter == 0):
-                    m.d.i2s_mclk += latch_l.eq(1)
-                    m.next = "WAIT"
+                with m.If(~self.ws & latch_r_tx):
+                    m.d.i2s_mclk += latch_r_tx.eq(0)
+                with m.If(sclk_edge_tx):
+                    m.d.i2s_mclk += data_tx.eq(Cat(0,data_tx))
+                    m.d.i2s_mclk += self.sd_tx.eq(data_tx[-1])
+                    m.d.i2s_mclk += counter_tx.eq(counter_tx - 1)
+
+                with m.If(counter_tx == 0):
+                    m.d.i2s_mclk += latch_l_tx.eq(1)
+                    m.next = "TX_WAIT"
 
 
-            with m.State("RIGHT"):
+            with m.State("TX_RIGHT"):
                 m.d.comb += self.r_data_tx.ready.eq(0)
-                with m.If(self.ws & latch_l):
-                    m.d.i2s_mclk += latch_l.eq(0)
+                with m.If(self.ws & latch_l_tx):
+                    m.d.i2s_mclk += latch_l_tx.eq(0)
+                with m.If(sclk_edge_tx):
+                    m.d.i2s_mclk += data_tx.eq(Cat(0,data_tx))
+                    m.d.i2s_mclk += self.sd_tx.eq(data_tx[-1])
+                    m.d.i2s_mclk += counter_tx.eq(counter_tx - 1)
+                with m.If(counter_tx == 0):
+                    m.d.i2s_mclk += latch_r_tx.eq(1)
+                    m.next = "TX_WAIT"
+
+        ##################### RX FSM #############################
+
+        # Detect edges on the `sclk` input:
+        sclk_edge = ~sclk_reg & self.sclk
+        m.d.i2s_mclk += sclk_reg.eq(self.sclk)
+
+        done_rx = Signal()
+        latch_l_rx = Signal()
+        latch_r_rx = Signal()
+
+        with m.FSM(domain='i2s_mclk') as fsm_rx:
+            with m.State("RX_WAIT"):
+                with m.If(self.en):
+                    with m.If(~self.ws):
+                        with m.If(~latch_l_rx):
+                            m.next = "RX_CAPT_LEFT"
+
+                    with m.If(self.ws):
+                        with m.If(~latch_r_rx):
+                            m.next = "RX_CAPT_RIGHT"
+
+            with m.State("RX_CAPT_LEFT"):
+                m.d.i2s_mclk += self.l_data_rx.valid.eq(0)
+                m.d.i2s_mclk += latch_r_rx.eq(0)
                 with m.If(sclk_edge):
-                    m.d.i2s_mclk += data.eq(Cat(0,data))
-                    m.d.i2s_mclk += self.sd_tx.eq(data[-1])
-                    m.d.i2s_mclk += counter.eq(counter - 1)
-                with m.If(counter == 0):
-                    m.d.i2s_mclk += latch_r.eq(1)
-                    m.next = "WAIT"
+                    m.d.i2s_mclk += [
+                        counter_rx.eq(counter_rx + 1),
+                        data_rx.eq(Cat(self.sd_rx, data_rx))
+                    ]
+                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 2)
+                    with m.If(done_rx):
+                        m.d.i2s_mclk += counter_rx.eq(0)
+                        m.d.i2s_mclk += done_rx.eq(1)
+                        m.next = "PAYLOAD_SEND_LEFT"
+
+            with m.State("RX_CAPT_RIGHT"):
+                m.d.i2s_mclk += self.r_data_rx.valid.eq(0)
+                m.d.i2s_mclk += latch_l_rx.eq(0)
+                with m.If(sclk_edge):
+                    m.d.i2s_mclk += [
+                        counter_rx.eq(counter_rx + 1),
+                        data_rx.eq(Cat(self.sd_rx, data_rx))
+                    ]
+                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 2)
+                    with m.If(done_rx):
+                        m.d.i2s_mclk += counter_rx.eq(0)
+                        m.d.i2s_mclk += done_rx.eq(1)
+                        m.next = "PAYLOAD_SEND_RIGHT"
+
+            with m.State("PAYLOAD_SEND_LEFT"):
+                m.d.i2s_mclk += latch_l_rx.eq(1)
+                with m.If(done_rx & ~self.l_data_rx.valid | self.l_data_rx.ready):
+                    m.d.i2s_mclk += [
+                        self.l_data_rx.payload.eq(data_rx),
+                        self.l_data_rx.valid.eq(1),
+                        done_rx.eq(0),
+                    ]
+                    m.next = "RX_WAIT"
+                with m.Elif(self.l_data_rx.ready):
+                    m.d.i2s_mclk += self.l_data_rx.valid.eq(0)
+
+            with m.State("PAYLOAD_SEND_RIGHT"):
+                m.d.i2s_mclk += latch_r_rx.eq(1)
+                with m.If(done_rx & ~self.r_data_rx.valid | self.r_data_rx.ready):
+                    m.d.i2s_mclk += [
+                        self.r_data_rx.payload.eq(data_rx),
+                        self.r_data_rx.valid.eq(1),
+                        done_rx.eq(0)
+                    ]
+                    m.next = "RX_WAIT"
+                with m.Elif(self.r_data_rx.ready):
+                    m.d.i2s_mclk += self.r_data_rx.valid.eq(0)
+            
         return m
