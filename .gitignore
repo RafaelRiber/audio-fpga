@@ -12,3 +12,4 @@ wheels/
 
 # Test files
 *.vcd
+amaranth-stubs
