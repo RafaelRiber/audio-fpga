@@ -1,0 +1,14 @@
+{
+  "include" : [
+    "src",
+    "tests"
+  ],
+  "venv" : ".venv",
+  "venvPath": ".",
+  "typeCheckingMode" : "off",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+
+}
+
+
