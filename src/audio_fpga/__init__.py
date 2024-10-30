@@ -3,7 +3,7 @@ from amaranth.build import *
 from amaranth.lib import wiring
 from amaranth_boards.icebreaker import ICEBreakerPlatform
 
-from .i2s import  I2S_Transceiver
+from .i2s import I2S_clocks, I2S_Transceiver
 
 # Temporary fix until uv supports env files
 from dotenv import load_dotenv
@@ -27,7 +27,7 @@ class Toplevel(Elaboratable):
         i2s2_pins = platform.request("pmod_i2s2")
 
         # I2S instantiation and connection
-        m.submodules.i2s_transceiver = i2s = I2S_Transceiver(width = 24)
+        m.submodules.i2s_transceiver = i2s = I2S_Transceiver(width = 24, mclk_sclk_ratio=4, sclk_ws_ratio=64)
 
         wiring.connect(m, i2s.l_data_rx, i2s.l_data_tx)
         wiring.connect(m, i2s.r_data_rx, i2s.r_data_tx)
@@ -42,7 +42,7 @@ class Toplevel(Elaboratable):
             i2s2_pins.ad_MCLK.o.eq(i2s.mclk),
             i2s2_pins.ad_LRCK.o.eq(i2s.ws),
             i2s2_pins.ad_SCLK.o.eq(i2s.sclk),
-            # i2s2_pins.da_SDIN.o.eq(i2s2_pins.ad_SDOUT.i)
+            # i2s2_pins.da_SDIN.o.eq(i2s2_pins.ad_SDOUT.i) # LEAVE HERE FOR TESTING
 
             i2s2_pins.da_SDIN.o.eq(i2s.sd_tx),
             i2s.sd_rx.eq(i2s2_pins.ad_SDOUT.i)
