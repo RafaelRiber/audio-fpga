@@ -1,5 +1,5 @@
 from amaranth import *
-from amaranth.lib import wiring, stream
+from amaranth.lib import wiring, stream, io
 from amaranth.lib.wiring import In, Out
 
 class I2S_clocks(wiring.Component):
@@ -100,7 +100,9 @@ class I2S_Transceiver(wiring.Component):
                 o_PLLOUTGLOBAL=cd_i2s_mclk.clk,
                 o_LOCK=pll_locked,
             )
-
+        else:
+            m.submodules.clk12 = clk12 = io.Buffer("i", platform.request("clk12", dir="-"))
+            m.d.comb += cd_i2s_mclk.clk.eq(clk12.i)
 
         m.submodules.i2s_clocks = i2s_clocks = I2S_clocks(mclk_sclk_ratio=self.mclk_sclk_ratio, sclk_ws_ratio=self.sclk_ws_ratio)
         m.d.comb += [
@@ -123,8 +125,8 @@ class I2S_Transceiver(wiring.Component):
                     self.mclk.eq(cd_i2s_mclk.clk)
             ]
 
-        counter_tx = Signal(self.width)
-        counter_rx = Signal(self.width)
+        counter_tx = Signal(range(self.width))
+        counter_rx = Signal(range(self.width))
 
         ##################### TX FSM #############################
 
@@ -157,6 +159,7 @@ class I2S_Transceiver(wiring.Component):
 
                 with m.If(counter_tx == 0):
                     m.d.i2s_mclk += latch_l_tx.eq(1)
+                    m.d.i2s_mclk += self.sd_tx.eq(0)
                     m.next = "TX_WAIT"
 
 
@@ -170,6 +173,7 @@ class I2S_Transceiver(wiring.Component):
                     m.d.i2s_mclk += counter_tx.eq(counter_tx - 1)
                 with m.If(counter_tx == 0):
                     m.d.i2s_mclk += latch_r_tx.eq(1)
+                    m.d.i2s_mclk += self.sd_tx.eq(0)
                     m.next = "TX_WAIT"
 
         ##################### RX FSM #############################
@@ -201,7 +205,7 @@ class I2S_Transceiver(wiring.Component):
                         counter_rx.eq(counter_rx + 1),
                         data_rx.eq(Cat(self.sd_rx, data_rx))
                     ]
-                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 1)
+                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width-1)
                     with m.If(done_rx):
                         m.d.i2s_mclk += counter_rx.eq(0)
                         m.d.i2s_mclk += done_rx.eq(1)
@@ -215,7 +219,7 @@ class I2S_Transceiver(wiring.Component):
                         counter_rx.eq(counter_rx + 1),
                         data_rx.eq(Cat(self.sd_rx, data_rx))
                     ]
-                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 2)
+                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width-1)
                     with m.If(done_rx):
                         m.d.i2s_mclk += counter_rx.eq(0)
                         m.d.i2s_mclk += done_rx.eq(1)
