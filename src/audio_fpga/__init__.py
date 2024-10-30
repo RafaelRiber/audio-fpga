@@ -3,9 +3,8 @@ from amaranth.build import *
 from amaranth.lib import wiring
 from amaranth_boards.icebreaker import ICEBreakerPlatform
 
-#from .blinky import Blinky
-from .i2s import I2S_clocks, I2S_Transceiver
-from .sine import Sine
+from .i2s import  I2S_Transceiver
+
 # Temporary fix until uv supports env files
 from dotenv import load_dotenv
 
@@ -26,11 +25,8 @@ class Toplevel(Elaboratable):
         m = Module()
 
         i2s2_pins = platform.request("pmod_i2s2")
-        
-        
 
         # I2S instantiation and connection
-        # m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
         m.submodules.i2s_transceiver = i2s = I2S_Transceiver(width = 24)
 
         wiring.connect(m, i2s.l_data_rx, i2s.l_data_tx)

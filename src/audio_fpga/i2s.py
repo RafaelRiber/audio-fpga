@@ -53,8 +53,8 @@ class I2S_Transceiver(wiring.Component):
         self.pll = pll_ice40
         super().__init__({
             # Inputs
-            "l_data_tx" : In(stream.Signature(signed(width))),
-            "r_data_tx" : In(stream.Signature(signed(width))),
+            "l_data_tx" : In(stream.Signature(width)),
+            "r_data_tx" : In(stream.Signature(width)),
             "en" : In(1),
             "sd_rx" : In(1),
             # Outputs
@@ -62,8 +62,8 @@ class I2S_Transceiver(wiring.Component):
             "sclk" : Out(1),
             "ws" : Out(1),
             "sd_tx" : Out(1),
-            "l_data_rx" : Out(stream.Signature(signed(width))),
-            "r_data_rx" : Out(stream.Signature(signed(width))) 
+            "l_data_rx" : Out(stream.Signature(width)),
+            "r_data_rx" : Out(stream.Signature(width)) 
     })
 
     def elaborate(self, platform):
@@ -199,7 +199,7 @@ class I2S_Transceiver(wiring.Component):
                         counter_rx.eq(counter_rx + 1),
                         data_rx.eq(Cat(self.sd_rx, data_rx))
                     ]
-                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 2)
+                    m.d.i2s_mclk += done_rx.eq(counter_rx == self.width - 1)
                     with m.If(done_rx):
                         m.d.i2s_mclk += counter_rx.eq(0)
                         m.d.i2s_mclk += done_rx.eq(1)
