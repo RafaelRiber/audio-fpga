@@ -60,9 +60,9 @@ class Sine(wiring.Component):
         rd_port = memory.read_port(domain="comb")
 
         with m.If(rd_port.addr == memory.depth - 1):
-            m.d.sync += rd_port.addr.eq(0)
+            m.d.i2s_mclk += rd_port.addr.eq(0)
         with m.Else():
-            m.d.sync += rd_port.addr.eq(rd_port.addr + 1)
+            m.d.i2s_mclk += rd_port.addr.eq(rd_port.addr + 1)
 
         word = Signal(self.width)
 
