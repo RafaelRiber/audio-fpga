@@ -48,9 +48,11 @@ class I2S_clocks(wiring.Component):
         return m
 
 class I2S_Transceiver(wiring.Component):
-    def __init__(self, width, pll_ice40=True):
+    def __init__(self, width, pll_ice40=True, mclk_sclk_ratio=4, sclk_ws_ratio=64):
         self.width = width
         self.pll = pll_ice40
+        self.mclk_sclk_ratio = mclk_sclk_ratio
+        self.sclk_ws_ratio = sclk_ws_ratio
         super().__init__({
             # Inputs
             "l_data_tx" : In(stream.Signature(width)),
@@ -100,7 +102,7 @@ class I2S_Transceiver(wiring.Component):
             )
 
 
-        m.submodules.i2s_clocks = i2s_clocks = I2S_clocks()
+        m.submodules.i2s_clocks = i2s_clocks = I2S_clocks(mclk_sclk_ratio=self.mclk_sclk_ratio, sclk_ws_ratio=self.sclk_ws_ratio)
         m.d.comb += [
             i2s_clocks.en.eq(self.en),
         ] 
