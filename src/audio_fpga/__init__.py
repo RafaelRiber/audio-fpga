@@ -28,8 +28,8 @@ class Toplevel(Elaboratable):
 
         # I2S instantiation and connection
         m.submodules.i2s_transceiver = i2s = I2S_Transceiver(width = 24, mclk_sclk_ratio=4, sclk_ws_ratio=64, pll_ice40=True)
-        m.submodules.queue_l = queue_l = AsyncFIFO(width=24, depth=16, r_domain='i2s_mclk', w_domain='i2s_mclk')
-        m.submodules.queue_r = queue_r = AsyncFIFO(width=24, depth=16, r_domain='i2s_mclk', w_domain='i2s_mclk')
+        m.submodules.queue_l = queue_l = AsyncFIFO(width=24, depth=1, r_domain='i2s_mclk', w_domain='i2s_mclk')
+        m.submodules.queue_r = queue_r = AsyncFIFO(width=24, depth=1, r_domain='i2s_mclk', w_domain='i2s_mclk')
 
         wiring.connect(m, i2s.l_data_rx, queue_l.w_stream)
         wiring.connect(m, queue_l.r_stream, i2s.l_data_tx)
